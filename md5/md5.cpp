@@ -1,56 +1,10 @@
 #include "md5.h"
 
-inline static u32 rotate_left(u32 x, int n) { return (x << n) | (x >> (32 - n)); }
-
-inline static u32 F(u32 x, u32 y, u32 z) { return (((x) & (y)) | ((~x) & (z))); }
-inline static u32 G(u32 x, u32 y, u32 z) { return (((x) & (z)) | ((y) & (~z))); }
-inline static u32 H(u32 x, u32 y, u32 z) { return ((x) ^ (y) ^ (z)); }
-inline static u32 I(u32 x, u32 y, u32 z) { return ((y) ^ ((x) | (~z))); }
-
-inline static void FF(u32& a, u32 b, u32 c, u32 d, u32 x, u32 s, u32 ac)
-{
-	a = rotate_left(a + F(b, c, d) + x + ac, s) + b;
-}
-
-inline static void GG(u32& a, u32 b, u32 c, u32 d, u32 x, u32 s, u32 ac)
-{
-	a = rotate_left(a + G(b, c, d) + x + ac, s) + b;
-}
-
-inline static void HH(u32& a, u32 b, u32 c, u32 d, u32 x, u32 s, u32 ac)
-{
-	a = rotate_left(a + H(b, c, d) + x + ac, s) + b;
-}
-
-inline static void II(u32& a, u32 b, u32 c, u32 d, u32 x, u32 s, u32 ac)
-{
-	a = rotate_left(a + I(b, c, d) + x + ac, s) + b;
-}
-
-/* Encodes input (ulong) into output (byte). Assumes length is a multiple of 4. */
-static void encode(const u32* input, size_t length, Byte* output)
-{
-	for (size_t i = 0, j = 0; i < length; i++, j += 4)
-	{
-		output[j] = (Byte)(input[i] & 0xff);
-		output[j + 1] = (Byte)((input[i] >> 8) & 0xff);
-		output[j + 2] = (Byte)((input[i] >> 16) & 0xff);
-		output[j + 3] = (Byte)((input[i] >> 24) & 0xff);
-	}
-}
-
-/* Decodes input (byte) into output (ulong). Assumes length is a multiple of 4. */
-static void decode(const Byte* input, size_t length, u32* output)
-{
-	for (size_t i = 0, j = 0; j < length; i++, j += 4)
-	{
-		output[i] = ((u32)input[j]) | (((u32)input[j + 1]) << 8) | (((u32)input[j + 2]) << 16) | (((u32)input[j + 3]) << 24);
-	}
-}
+MD5::MD5() {}
 
 static std::string bytesToHexString(const Byte* input, size_t length)
 {
-	const char HEX[16] = { '0', '1', '2', '3','4', '5', '6', '7','8', '9', 'a', 'b','c', 'd', 'e', 'f' };
+	constexpr char HEX[16] = { '0', '1', '2', '3','4', '5', '6', '7','8', '9', 'a', 'b','c', 'd', 'e', 'f' };
 
 	std::string str;
 	str.reserve(length << 1);
@@ -64,7 +18,17 @@ static std::string bytesToHexString(const Byte* input, size_t length)
 	return str;
 }
 
-MD5::MD5() {}
+/* Encodes input (ulong) into output (byte). Assumes length is a multiple of 4. */
+static void encode(const u32* input, size_t length, Byte* output)
+{
+	for (size_t i = 0, j = 0; i < length; i++, j += 4)
+	{
+		output[j] = (Byte)(input[i] & 0x00ff);
+		output[j + 1] = (Byte)((input[i] >> 8) & 0x00ff);
+		output[j + 2] = (Byte)((input[i] >> 16) & 0x00ff);
+		output[j + 3] = (Byte)((input[i] >> 24) & 0x00ff);
+	}
+}
 
 /* Return the message-digest */
 std::string MD5::digest(const std::string& file)
@@ -136,6 +100,15 @@ void MD5::update(const Byte* input, size_t length)
 	memcpy(&m_buffer[index], &input[i], length - i);
 }
 
+/* Decodes input (byte) into output (ulong). Assumes length is a multiple of 4. */
+static void decode(const Byte* input, size_t length, u32* output)
+{
+	for (size_t i = 0, j = 0; j < length; i++, j += 4)
+	{
+		output[i] = ((u32)input[j]) | (((u32)input[j + 1]) << 8) | (((u32)input[j + 2]) << 16) | (((u32)input[j + 3]) << 24);
+	}
+}
+
 /* MD5 finalization. Ends an MD5 message-_digest operation, writing the the message _digest and zeroizing the context. */
 void MD5::final()
 {
@@ -151,6 +124,33 @@ void MD5::final()
 
 	/* Append length (before padding) */
 	update(bits, 8);
+}
+
+inline static u32 rotate_left(u32 x, int n) { return (x << n) | (x >> (32 - n)); }
+
+inline static u32 F(u32 x, u32 y, u32 z) { return (((x) & (y)) | ((~x) & (z))); }
+inline static u32 G(u32 x, u32 y, u32 z) { return (((x) & (z)) | ((y) & (~z))); }
+inline static u32 H(u32 x, u32 y, u32 z) { return ((x) ^ (y) ^ (z)); }
+inline static u32 I(u32 x, u32 y, u32 z) { return ((y) ^ ((x) | (~z))); }
+
+inline static void FF(u32& a, u32 b, u32 c, u32 d, u32 x, u32 s, u32 ac)
+{
+	a = rotate_left(a + F(b, c, d) + x + ac, s) + b;
+}
+
+inline static void GG(u32& a, u32 b, u32 c, u32 d, u32 x, u32 s, u32 ac)
+{
+	a = rotate_left(a + G(b, c, d) + x + ac, s) + b;
+}
+
+inline static void HH(u32& a, u32 b, u32 c, u32 d, u32 x, u32 s, u32 ac)
+{
+	a = rotate_left(a + H(b, c, d) + x + ac, s) + b;
+}
+
+inline static void II(u32& a, u32 b, u32 c, u32 d, u32 x, u32 s, u32 ac)
+{
+	a = rotate_left(a + I(b, c, d) + x + ac, s) + b;
 }
 
 /* MD5 basic transformation. Transforms _state based on block. */
