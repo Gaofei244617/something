@@ -10,7 +10,7 @@ std::vector<std::string> split(const std::string &text, char delim)
     std::string item;
     while (std::getline(ss, item, delim))
     {
-        if (item.empty())
+        if (!item.empty())
         {
             tokens.push_back(item);
         }
